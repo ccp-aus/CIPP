@@ -98,6 +98,7 @@ export const CippUserActions = () => {
             { label: "Disabled", value: "Disabled" },
           ],
           multiple: false,
+          creatable: false,
         },
       ],
       confirmText: "Are you sure you want to set per-user MFA for these users?",
@@ -283,7 +284,7 @@ export const CippUserActions = () => {
     },
     {
       label: "Clear Immutable ID",
-      type: "GET",
+      type: "POST",
       icon: <Clear />,
       url: "/api/ExecClrImmId",
       data: {
@@ -291,7 +292,7 @@ export const CippUserActions = () => {
       },
       confirmText: "Are you sure you want to clear the Immutable ID for this user?",
       multiPost: false,
-      condition: (row) => row.onPremisesSyncEnabled,
+      condition: (row) => !row.onPremisesSyncEnabled && row?.onPremisesImmutableId,
     },
     {
       label: "Revoke all user sessions",
