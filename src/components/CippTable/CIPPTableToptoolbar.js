@@ -1,4 +1,4 @@
-import { DeveloperMode, Sync, Tune, ViewColumn } from "@mui/icons-material";
+import { DeveloperMode, SevereCold, Sync, Tune, ViewColumn } from "@mui/icons-material";
 import {
   Button,
   Checkbox,
@@ -73,10 +73,17 @@ export const CIPPTableToptoolbar = ({
 
   //useEffect to set the column visibility to the preferred columns if they exist
   useEffect(() => {
-    if (settings?.columnDefaults?.[pageName]) {
+    if (
+      settings?.columnDefaults?.[pageName] &&
+      Object.keys(settings?.columnDefaults?.[pageName]).length > 0
+    ) {
       setColumnVisibility(settings?.columnDefaults?.[pageName]);
     }
   }, [settings?.columnDefaults?.[pageName], router, usedColumns]);
+
+  useEffect(() => {
+    setOriginalSimpleColumns(simpleColumns);
+  }, [simpleColumns]);
 
   const presetList = ApiGetCall({
     url: "/api/ListGraphExplorerPresets",
@@ -88,27 +95,42 @@ export const CIPPTableToptoolbar = ({
   });
 
   const resetToDefaultVisibility = () => {
-    setColumnVisibility({});
+    setColumnVisibility((prevVisibility) => {
+      const updatedVisibility = {};
+      for (const col in prevVisibility) {
+        if (Array.isArray(originalSimpleColumns)) {
+          updatedVisibility[col] = originalSimpleColumns.includes(col);
+        }
+      }
+      return updatedVisibility;
+    });
     settings.handleUpdate({
       columnDefaults: {
         ...settings?.columnDefaults,
         [pageName]: {},
       },
     });
+    columnPopover.handleClose();
   };
 
   const resetToPreferedVisibility = () => {
-    if (settings?.columnDefaults?.[pageName]) {
+    if (
+      settings?.columnDefaults?.[pageName] &&
+      Object.keys(settings?.columnDefaults?.[pageName]).length > 0
+    ) {
       setColumnVisibility(settings?.columnDefaults?.[pageName]);
     } else {
       setColumnVisibility((prevVisibility) => {
         const updatedVisibility = {};
         for (const col in prevVisibility) {
-          updatedVisibility[col] = originalSimpleColumns.includes(col);
+          if (Array.isArray(originalSimpleColumns)) {
+            updatedVisibility[col] = originalSimpleColumns.includes(col);
+          }
         }
         return updatedVisibility;
       });
     }
+    columnPopover.handleClose();
   };
 
   const saveAsPreferedColumns = () => {
@@ -118,6 +140,7 @@ export const CIPPTableToptoolbar = ({
         [pageName]: columnVisibility,
       },
     });
+    columnPopover.handleClose();
   };
 
   const mergeCaseInsensitive = (obj1, obj2) => {
@@ -235,7 +258,7 @@ export const CIPPTableToptoolbar = ({
       // update filters to include graph explorer presets
       setFilterList([...filters, ...graphPresetList]);
     }
-  }, [presetList?.isSuccess]);
+  }, [presetList?.isSuccess, simpleColumns]);
 
   return (
     <>
@@ -267,7 +290,6 @@ export const CIPPTableToptoolbar = ({
                   } else if (data && !getRequestData.isFetched) {
                     //do nothing because data was sent native.
                   } else if (getRequestData) {
-                    console.log(getRequestData);
                     getRequestData.refetch();
                   }
                 }}
@@ -424,6 +446,11 @@ export const CIPPTableToptoolbar = ({
         </Box>
         <Box>
           <Box sx={{ display: "flex", gap: "0.5rem" }}>
+            {getRequestData?.data?.pages?.[0].Metadata?.ColdStart === true && (
+              <Tooltip title="Function App cold start was detected, data takes a little longer to retrieve on first load.">
+                <SevereCold />
+              </Tooltip>
+            )}
             {actions && (table.getIsSomeRowsSelected() || table.getIsAllRowsSelected()) && (
               <>
                 <Button
@@ -460,7 +487,7 @@ export const CIPPTableToptoolbar = ({
                   }}
                 >
                   {actions
-                    ?.filter((action) => !action.link)
+                    ?.filter((action) => !action.link && !action?.hideBulk)
                     .map((action, index) => (
                       <MenuItem
                         key={index}
@@ -511,13 +538,43 @@ export const CIPPTableToptoolbar = ({
         size="md"
         title="Edit Filters"
         visible={filterCanvasVisible}
-        onClose={() => setFilterCanvasVisible(false)}
+        onClose={() => setFilterCanvasVisible(!filterCanvasVisible)}
       >
         <CippGraphExplorerFilter
           endpointFilter={api?.data?.Endpoint}
           onSubmitFilter={(filter) => {
             setTableFilter(filter, "graph", "Custom Filter");
-            setFilterCanvasVisible(false);
+            if (filter?.$select) {
+              let selectedColumns = [];
+              if (Array.isArray(filter?.$select)) {
+                selectedColumns = filter?.$select;
+              } else {
+                selectedColumns = filter?.$select.split(",");
+              }
+              const setNestedVisibility = (col) => {
+                if (typeof col === "object" && col !== null) {
+                  Object.keys(col).forEach((key) => {
+                    if (usedColumns.includes(key.trim())) {
+                      setColumnVisibility((prev) => ({ ...prev, [key.trim()]: true }));
+                      setNestedVisibility(col[key]);
+                    }
+                  });
+                } else {
+                  if (usedColumns.includes(col.trim())) {
+                    setColumnVisibility((prev) => ({ ...prev, [col.trim()]: true }));
+                  }
+                }
+              };
+              if (selectedColumns.length > 0) {
+                setConfiguredSimpleColumns(selectedColumns);
+                selectedColumns.forEach((col) => {
+                  setNestedVisibility(col);
+                });
+              }
+            } else {
+              setConfiguredSimpleColumns(originalSimpleColumns);
+            }
+            setFilterCanvasVisible(!filterCanvasVisible);
           }}
           component="card"
         />

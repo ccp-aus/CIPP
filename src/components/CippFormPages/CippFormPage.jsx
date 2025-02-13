@@ -27,23 +27,23 @@ const CippFormPage = (props) => {
     formControl,
     postUrl,
     customDataformatter,
-    resetForm = true,
+    resetForm = false,
     hideBackButton = false,
     hidePageType = false,
     hideTitle = false,
     hideSubmit = false,
+    allowResubmit = false,
     addedButtons,
     ...other
   } = props;
   const router = useRouter();
-
   //check if there are
   const postCall = ApiPostCall({
     datafromUrl: true,
     relatedQueryKeys: queryKey,
   });
 
-  const { isValid } = useFormState({ control: formControl.control });
+  const { isValid, isDirty } = useFormState({ control: formControl.control });
 
   useEffect(() => {
     delete router.query.tenantFilter;
@@ -134,7 +134,7 @@ const CippFormPage = (props) => {
                   <Stack spacing={2} direction="row">
                     {addedButtons && addedButtons}
                     <Button
-                      disabled={postCall.isPending || !isValid}
+                      disabled={postCall.isPending || !isValid || (!allowResubmit && !isDirty)}
                       onClick={formControl.handleSubmit(handleSubmit)}
                       type="submit"
                       variant="contained"

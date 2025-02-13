@@ -32,6 +32,11 @@ export const CippWizardCSVImport = (props) => {
   const [newTableData, setTableData] = useState([]);
   const [open, setOpen] = useState(false);
 
+  // Register form field with validation
+  formControl.register(name, {
+    validate: (value) => Array.isArray(value) && value.length > 0,
+  });
+
   const handleRemoveItem = (row) => {
     if (row === undefined) return false;
     const index = tableData?.findIndex((item) => item === row);
@@ -43,14 +48,15 @@ export const CippWizardCSVImport = (props) => {
   const handleAddItem = () => {
     const newRowData = formControl.getValues("addrow");
     if (newRowData === undefined) return false;
-
     const newTableData = [...tableData, newRowData];
     setTableData(newTableData);
     setOpen(false);
   };
 
   useEffect(() => {
-    formControl.setValue(name, newTableData);
+    formControl.setValue(name, newTableData, {
+      shouldValidate: true,
+    });
   }, [newTableData]);
 
   const actions = [
@@ -87,6 +93,15 @@ export const CippWizardCSVImport = (props) => {
                   label={getCippTranslation(field)}
                   type="textField"
                   formControl={formControl}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      if (e.target.value === "") return false;
+                      handleAddItem();
+                      setTimeout(() => {
+                        formControl.setValue(`addrow.${field}`, "");
+                      }, 500);
+                    }
+                  }}
                 />
               </Grid>
             </>

@@ -44,6 +44,12 @@ export const CippPropertyListCard = (props) => {
   };
 
   const setPadding = isLabelPresent ? { py: 0.5, px: 3 } : { py: 1.5, px: 3 };
+  const handleActionDisabled = (row, action) => {
+    if (action?.condition) {
+      return !action.condition(row);
+    }
+    return false;
+  };
 
   return (
     <>
@@ -116,15 +122,25 @@ export const CippPropertyListCard = (props) => {
                 )}
               </PropertyList>
               <PropertyList>
-                {secondHalf.map((item, index) => (
+                {isFetching ? (
                   <PropertyListItem
+                    key={"loading-bar"}
                     align={align}
                     divider={showDivider}
-                    copyItems={copyItems}
-                    key={`${index}-index-PropertyListOffCanvas`}
-                    {...item}
+                    label="Loading"
+                    value={<Skeleton width={280} />}
                   />
-                ))}
+                ) : (
+                  secondHalf.map((item, index) => (
+                    <PropertyListItem
+                      align={align}
+                      divider={showDivider}
+                      copyItems={copyItems}
+                      key={`${index}-index-PropertyListOffCanvas`}
+                      {...item}
+                    />
+                  ))
+                )}
               </PropertyList>
             </Stack>
           )}
@@ -133,7 +149,7 @@ export const CippPropertyListCard = (props) => {
           {actionItems?.length > 0 &&
             actionItems.map((item, index) => (
               <ActionListItem
-                key={`${item.label}-index-ActionList-OffCanvas`}
+                key={`${item.label}-${index}-ActionList-OffCanvas`}
                 icon={<SvgIcon fontSize="small">{item.icon}</SvgIcon>}
                 label={item.label}
                 onClick={
@@ -145,9 +161,14 @@ export const CippPropertyListCard = (props) => {
                           action: item,
                           ready: true,
                         });
-                        createDialog.handleOpen();
+                        if (item?.noConfirm) {
+                          item.customFunction(item, data, {});
+                        } else {
+                          createDialog.handleOpen();
+                        }
                       }
                 }
+                disabled={handleActionDisabled(data, item)}
               />
             ))}
         </ActionList>

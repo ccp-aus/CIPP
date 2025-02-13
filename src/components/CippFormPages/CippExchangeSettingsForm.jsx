@@ -244,19 +244,20 @@ const CippExchangeSettingsForm = (props) => {
             label="Add Access"
             name="calendar.UserToGetPermissions"
             isFetching={isFetching || usersList.isFetching}
-            options={
-              usersList?.data?.Results?.map((user) => ({
+            options={[
+              { value: "Default", label: "Default (Default)" },
+              ...(usersList?.data?.Results?.map((user) => ({
                 value: user.userPrincipalName,
                 label: `${user.displayName} (${user.userPrincipalName})`,
-              })) || []
-            }
+              })) || []),
+            ]}
             multiple={false}
             formControl={formControl}
           />
           <CippFormComponent
             type="hidden"
             name="calendar.FolderName"
-            value={calPermissions?.[0]?.FolderName}
+            value={calPermissions?.[0]?.FolderName ?? "Calendar"}
             formControl={formControl}
           />
           <CippFormCondition
@@ -514,7 +515,7 @@ const CippExchangeSettingsForm = (props) => {
                 </SvgIcon>
               </IconButton>
             </Box>
-            <Collapse in={isExpanded}>
+            <Collapse in={isExpanded} unmountOnExit>
               <Divider />
               <Box sx={{ p: 2 }}>{section.formContent}</Box>
             </Collapse>

@@ -1,7 +1,7 @@
 import React from "react";
 import { CippFormComponent } from "./CippFormComponent";
-import { useWatch } from "react-hook-form";
 import { getCippLicenseTranslation } from "../../utils/get-cipp-license-translation";
+import { useSettings } from "../../hooks/use-settings";
 
 export const CippFormLicenseSelector = ({
   formControl,
@@ -12,7 +12,7 @@ export const CippFormLicenseSelector = ({
   addedField,
   ...other
 }) => {
-  const currentTenant = useWatch({ control: formControl.control, name: "tenantFilter" });
+  const userSettingsDefaults = useSettings();
   return (
     <CippFormComponent
       name={name}
@@ -20,17 +20,15 @@ export const CippFormLicenseSelector = ({
       type="autoComplete"
       formControl={formControl}
       multiple={multiple}
+      creatable={false}
       api={{
         addedField: addedField,
-        tenantFilter: currentTenant ? currentTenant.value : undefined,
-        url: "/api/ListGraphRequest",
-        dataKey: "Results",
+        tenantFilter: userSettingsDefaults.currentTenant ?? undefined,
+        url: "/api/ListLicenses",
         labelField: (option) =>
-          `${getCippLicenseTranslation([option])} (${
-            option.prepaidUnits.enabled - option.consumedUnits
-          } available)`,
+          `${getCippLicenseTranslation([option])} (${option?.availableUnits} available)`,
         valueField: "skuId",
-        queryKey: `ListLicenses-${currentTenant?.value}`,
+        queryKey: `ListLicenses-${userSettingsDefaults?.currentTenant ?? undefined}`,
         data: {
           Endpoint: "subscribedSkus",
           $count: true,

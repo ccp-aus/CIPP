@@ -74,7 +74,10 @@ const Page = () => {
   }, {});
 
   const handleOpenDialog = () => setDialogOpen(true);
-  const handleCloseDialog = () => setDialogOpen(false);
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setSearchQuery("");
+  };
 
   const filterStandards = (standardsList) =>
     standardsList.filter(
@@ -92,6 +95,13 @@ const Page = () => {
   };
 
   const handleAddMultipleStandard = (standardName) => {
+    //if the standardname contains an array qualifier,e.g standardName[0], strip that away.
+    const arrayPattern = /(.*)\[(\d+)\]$/;
+    const match = standardName.match(arrayPattern);
+    if (match) {
+      standardName = match[1];
+    }
+
     setSelectedStandards((prev) => {
       const existingInstances = Object.keys(prev).filter((name) => name.startsWith(standardName));
       const newIndex = existingInstances.length;

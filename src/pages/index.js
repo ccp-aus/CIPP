@@ -135,7 +135,6 @@ const Page = () => {
       if (!Array.isArray(actions)) {
         actions = [actions];
       }
-      console.log("actions is", actions);
       actions.forEach((actionObj) => {
         if (actionObj?.value === "Remediate") {
           remediateCount++;
@@ -168,6 +167,7 @@ const Page = () => {
         label: portal.label,
         target: "_blank",
         link: portal.url.replace(portal.variable, tenantLookup?.[portal.variable]),
+        icon: portal.icon,
       }));
       setPortalMenuItems(menuItems);
     }
@@ -260,7 +260,7 @@ const Page = () => {
                     label: "",
                     value: domain.name,
                   }))}
-                actionItems={
+                actionButton={
                   organization.data?.verifiedDomains?.length > 3 && (
                     <Button onClick={() => setDomainVisible(!domainVisible)}>
                       {domainVisible ? "See less" : "See more..."}

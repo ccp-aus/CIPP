@@ -1,4 +1,14 @@
-import { Alert, Box, Button, CardContent, Stack, Tab, Tabs, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  CardContent,
+  Skeleton,
+  Stack,
+  Tab,
+  Tabs,
+  Typography,
+} from "@mui/material";
 import CippIntegrationSettings from "/src/components/CippIntegrations/CippIntegrationSettings";
 import { Layout as DashboardLayout } from "/src/layouts/index.js";
 import { useForm } from "react-hook-form";
@@ -15,6 +25,7 @@ import CippPageCard from "../../../components/CippCards/CippPageCard";
 import CippIntegrationTenantMapping from "../../../components/CippIntegrations/CippIntegrationTenantMapping";
 import CippIntegrationFieldMapping from "../../../components/CippIntegrations/CippIntegrationFieldMapping";
 import { CippCardTabPanel } from "../../../components/CippComponents/CippCardTabPanel";
+import CippApiClientManagement from "../../../components/CippIntegrations/CippApiClientManagement";
 
 function tabProps(index) {
   return {
@@ -44,6 +55,9 @@ const Page = () => {
   };
 
   const handleIntegrationTest = () => {
+    if (testQuery.waiting) {
+      actionTestResults.refetch();
+    }
     setTestQuery({
       url: "/api/ExecExtensionTest",
       data: {
@@ -74,7 +88,7 @@ const Page = () => {
     defaultValues: integrations?.data,
   });
 
-  const extension = extensions.find((extension) => extension.id === router.query.id);
+  const extension = extensions.find((extension) => extension.id === router.query.id) || {};
 
   var logo = extension?.logo;
   if (preferredTheme === "dark" && extension?.logoDark) {
@@ -92,13 +106,23 @@ const Page = () => {
 
   return (
     <>
+      {integrations.isLoading && (
+        <CippPageCard title="Integrations" headerText={extension.headerText} hideTitleText={true}>
+          <CardContent>
+            <Stack spacing={2}>
+              <Skeleton variant="rectangular" height={150} />
+              <Skeleton variant="rectangular" height={150} />
+              <Skeleton variant="rectangular" height={400} />
+            </Stack>
+          </CardContent>
+        </CippPageCard>
+      )}
       {integrations.isSuccess && extension && (
         <CippPageCard
           title={extension.name}
           backButtonTitle="Integrations"
           headerText={extension.headerText}
           hideTitleText={true}
-          headerImage={logo}
         >
           <CardContent sx={{ pb: 0, mb: 0 }}>
             {logo && (
@@ -106,7 +130,7 @@ const Page = () => {
                 component="img"
                 src={logo}
                 alt={extension.name}
-                sx={{ width: "50%", mx: "auto" }}
+                sx={{ maxWidth: "50%", mx: "auto", maxHeight: "125px" }}
               />
             )}
             <Typography variant="body2" paragraph style={{ marginTop: "1em" }}>
@@ -117,54 +141,64 @@ const Page = () => {
                 {extension.alertText}
               </Alert>
             )}
-            <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{ mb: 2, display: "flex", alignItems: "center" }}
+            >
               {extension?.hideTestButton !== true && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleIntegrationTest()}
-                  disabled={actionTestResults?.isLoading}
-                >
-                  <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
-                    <BeakerIcon />
-                  </SvgIcon>
-                  Test
-                </Button>
+                <Box>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleIntegrationTest()}
+                    disabled={actionTestResults?.isLoading}
+                  >
+                    <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
+                      <BeakerIcon />
+                    </SvgIcon>
+                    Test
+                  </Button>
+                </Box>
               )}
               {extension?.forceSyncButton && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleIntegrationSync()}
-                  disabled={actionSyncResults.isLoading}
-                >
-                  <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
-                    <ArrowPathIcon />
-                  </SvgIcon>
-                  Force Sync
-                </Button>
+                <Box>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleIntegrationSync()}
+                    disabled={actionSyncResults.isLoading}
+                  >
+                    <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
+                      <ArrowPathIcon />
+                    </SvgIcon>
+                    Force Sync
+                  </Button>
+                </Box>
               )}
               {extension?.links && (
                 <>
                   {extension.links.map((link, index) => (
-                    <Button
-                      href={link.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      color="inherit"
-                      key={index}
-                    >
-                      <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
-                        <ArrowTopRightOnSquareIcon />
-                      </SvgIcon>
-                      {link.name}
-                    </Button>
+                    <Box>
+                      <Button
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        color="inherit"
+                        key={index}
+                      >
+                        <SvgIcon fontSize="small" style={{ marginRight: "8" }}>
+                          <ArrowTopRightOnSquareIcon />
+                        </SvgIcon>
+                        {link.name}
+                      </Button>
+                    </Box>
                   ))}
                 </>
               )}
-              <CippApiResults apiObject={actionTestResults} />
-              <CippApiResults apiObject={actionSyncResults} />
             </Stack>
+            <CippApiResults apiObject={actionTestResults} />
+            <CippApiResults apiObject={actionSyncResults} />
           </CardContent>
 
           <Box sx={{ width: "100%" }}>
@@ -176,8 +210,13 @@ const Page = () => {
               </Tabs>
             </Box>
             <CippCardTabPanel value={value} index={0}>
-              <CippIntegrationSettings />
+              {extension?.id === "cippapi" ? (
+                <CippApiClientManagement />
+              ) : (
+                <CippIntegrationSettings />
+              )}
             </CippCardTabPanel>
+
             {extension?.mappingRequired && (
               <CippCardTabPanel value={value} index={1}>
                 <CippIntegrationTenantMapping />

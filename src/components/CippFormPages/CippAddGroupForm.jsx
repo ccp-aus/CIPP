@@ -51,7 +51,7 @@ const CippAddGroupForm = (props) => {
           formControl={formControl}
           name="owners"
           label="Owners"
-          multiple={false}
+          multiple={true}
           select={"id,userPrincipalName,displayName"}
         />
       </Grid>
@@ -62,7 +62,7 @@ const CippAddGroupForm = (props) => {
           formControl={formControl}
           name="members"
           label="Members"
-          multiple={false}
+          multiple={true}
           select={"id,userPrincipalName,displayName"}
         />
       </Grid>
@@ -76,7 +76,7 @@ const CippAddGroupForm = (props) => {
             { label: "Security Group", value: "generic" },
             { label: "Microsoft 365 Group", value: "m365" },
             { label: "Dynamic Group", value: "dynamic" },
-            { label: "Dynamic Distribution Group", value: "dynamicdistribution" },
+            { label: "Dynamic Distribution Group", value: "dynamicDistribution" },
             { label: "Distribution List", value: "distribution" },
             { label: "Mail Enabled Security Group", value: "security" },
           ]}

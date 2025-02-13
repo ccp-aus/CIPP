@@ -24,11 +24,16 @@ import {
 } from "mui-tiptap";
 import StarterKit from "@tiptap/starter-kit";
 import { CippDataTable } from "../CippTable/CippDataTable";
+import React from "react";
 
 // Helper function to convert bracket notation to dot notation
 const convertBracketsToDots = (name) => {
   return name.replace(/\[(\d+)\]/g, ".$1"); // Replace [0] with .0
 };
+
+const MemoizedCippAutoComplete = React.memo((props) => {
+  return <CippAutoComplete {...props} />;
+});
 
 export const CippFormComponent = (props) => {
   const {
@@ -225,6 +230,33 @@ export const CippFormComponent = (props) => {
         </>
       );
 
+    case "select":
+      return (
+        <>
+          <div>
+            <Controller
+              name={convertedName}
+              control={formControl.control}
+              rules={validators}
+              render={({ field }) => (
+                <MemoizedCippAutoComplete
+                  {...other}
+                  isFetching={other.isFetching}
+                  variant="filled"
+                  defaultValue={field.value}
+                  label={label}
+                  multiple={false}
+                  onChange={(value) => field.onChange(value?.value)}
+                />
+              )}
+            />
+          </div>
+          <Typography variant="subtitle3" color="error">
+            {get(errors, convertedName, {}).message}
+          </Typography>
+        </>
+      );
+
     case "autoComplete":
       return (
         <>
@@ -234,7 +266,7 @@ export const CippFormComponent = (props) => {
               control={formControl.control}
               rules={validators}
               render={({ field }) => (
-                <CippAutoComplete
+                <MemoizedCippAutoComplete
                   {...other}
                   isFetching={other.isFetching}
                   variant="filled"
