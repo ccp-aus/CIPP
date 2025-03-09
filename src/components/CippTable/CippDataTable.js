@@ -178,7 +178,11 @@ export const CippDataTable = (props) => {
     data: memoizedData,
     state: {
       columnVisibility,
-      showSkeletons: getRequestData.isFetching ? getRequestData.isFetching : isFetching,
+      showSkeletons: getRequestData.isFetchingNextPage
+        ? false
+        : getRequestData.isFetching
+        ? getRequestData.isFetching
+        : isFetching,
     },
     renderEmptyRowsFallback: ({ table }) =>
       getRequestData.data?.pages?.[0].Metadata?.QueueMessage ? (
@@ -274,7 +278,7 @@ export const CippDataTable = (props) => {
               refreshFunction={refreshFunction}
               setColumnVisibility={setColumnVisibility}
               filters={filters}
-              queryKeys={queryKey}
+              queryKeys={queryKey ? queryKey : title}
               graphFilterData={graphFilterData}
               setGraphFilterData={setGraphFilterData}
               setConfiguredSimpleColumns={setConfiguredSimpleColumns}
@@ -283,6 +287,7 @@ export const CippDataTable = (props) => {
         </>
       );
     },
+    enableGlobalFilterModes: true,
   });
 
   useEffect(() => {

@@ -27,7 +27,6 @@ const MemoTextField = React.memo(function MemoTextField({
       {...otherParams}
       label={label}
       placeholder={placeholder}
-      variant="outlined"
       {...otherProps}
       slotProps={{
         inputLabel: {
@@ -70,6 +69,7 @@ export const CippAutoComplete = (props) => {
     isFetching = false,
     sx,
     removeOptions = [],
+    sortOptions = false,
     ...other
   } = props;
 
@@ -100,7 +100,7 @@ export const CippAutoComplete = (props) => {
       setGetRequestInfo({
         url: api.url,
         data: {
-          ...(!api.excludeTenantFilter ? { TenantFilter: currentTenant } : null),
+          ...(!api.excludeTenantFilter ? { tenantFilter: currentTenant } : null),
           ...api.data,
         },
         waiting: true,
@@ -178,6 +178,9 @@ export const CippAutoComplete = (props) => {
     let finalOptions = api ? usedOptions : options;
     if (removeOptions && removeOptions.length) {
       finalOptions = finalOptions.filter((o) => !removeOptions.includes(o.value));
+    }
+    if (sortOptions) {
+      finalOptions.sort((a, b) => a.label?.localeCompare(b.label));
     }
     return finalOptions;
   }, [api, usedOptions, options, removeOptions]);
@@ -275,7 +278,13 @@ export const CippAutoComplete = (props) => {
       sx={sx}
       renderInput={(params) => (
         <Stack direction="row" spacing={1}>
-          <MemoTextField params={params} label={label} placeholder={placeholder} required={required} {...other} />
+          <MemoTextField
+            params={params}
+            label={label}
+            placeholder={placeholder}
+            required={required}
+            {...other}
+          />
           {api?.url && api?.showRefresh && (
             <IconButton
               size="small"
