@@ -1,13 +1,23 @@
 import PropTypes from "prop-types";
-import { Card, CardHeader, Divider, Skeleton, Chip } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  Divider,
+  Skeleton,
+  Chip,
+  IconButton,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import { PropertyList } from "/src/components/property-list";
 import { PropertyListItem } from "/src/components/property-list-item";
 import { getCippFormatting } from "../../utils/get-cipp-formatting";
-import { Check as CheckIcon, Close as CloseIcon } from "@mui/icons-material";
+import { Check as CheckIcon, Close as CloseIcon, Sync } from "@mui/icons-material";
 import { LinearProgressWithLabel } from "../linearProgressWithLabel";
+import { Stack } from "@mui/system";
 
 export const CippExchangeInfoCard = (props) => {
-  const { exchangeData, isFetching = false, ...other } = props;
+  const { exchangeData, isLoading = false, isFetching = false, handleRefresh, ...other } = props;
 
   // Define the protocols array
   const protocols = [
@@ -19,16 +29,43 @@ export const CippExchangeInfoCard = (props) => {
     { name: "ActiveSync", enabled: exchangeData?.MailboxActiveSyncEnabled },
   ];
 
+  // Define mailbox hold types array
+  const holds = [
+    { name: "Compliance Tag Hold", enabled: exchangeData?.ComplianceTagHold },
+    { name: "Retention Hold", enabled: exchangeData?.RetentionHold },
+    { name: "Litigation Hold", enabled: exchangeData?.LitigationHold },
+    { name: "In-Place Hold", enabled: exchangeData?.InPlaceHold },
+    { name: "eDiscovery Hold", enabled: exchangeData?.EDiscoveryHold },
+    { name: "Purview Retention Hold", enabled: exchangeData?.PurviewRetentionHold },
+    { name: "Excluded from Org-Wide Hold", enabled: exchangeData?.ExcludedFromOrgWideHold },
+  ];
+
   return (
     <Card {...other}>
-      <CardHeader title="Exchange Details" />
+      <CardHeader
+        title={
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", display: "flex", justifyContent: "space-between" }}
+          >
+            <Typography variant="h6">Exchange Information</Typography>
+            {isFetching ? (
+              <CircularProgress size={20} />
+            ) : (
+              <IconButton onClick={handleRefresh} size="small">
+                <Sync />
+              </IconButton>
+            )}
+          </Stack>
+        }
+      />
       <Divider />
       <PropertyList>
         <PropertyListItem
           divider
           label="Mailbox Type"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={120} />
             ) : (
               exchangeData?.RecipientTypeDetails || "N/A"
@@ -39,12 +76,15 @@ export const CippExchangeInfoCard = (props) => {
           divider
           label="Mailbox Usage"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={80} />
             ) : exchangeData?.TotalItemSize != null ? (
               <LinearProgressWithLabel
                 sx={{ width: "100%" }}
                 variant="determinate"
+                addedLabel={`(${Math.round(exchangeData.TotalItemSize)}/${Math.round(
+                  exchangeData?.ProhibitSendReceiveQuota
+                )}GB)`}
                 value={
                   Math.round(
                     (exchangeData?.TotalItemSize / exchangeData?.ProhibitSendReceiveQuota) *
@@ -62,7 +102,7 @@ export const CippExchangeInfoCard = (props) => {
           divider
           label="Hidden From Address Lists"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={60} />
             ) : (
               getCippFormatting(exchangeData?.HiddenFromAddressLists, "HiddenFromAddressLists")
@@ -72,7 +112,7 @@ export const CippExchangeInfoCard = (props) => {
         <PropertyListItem
           label="Forward and Deliver"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={60} />
             ) : (
               getCippFormatting(exchangeData?.ForwardAndDeliver, "ForwardAndDeliver")
@@ -83,7 +123,7 @@ export const CippExchangeInfoCard = (props) => {
           divider
           label="Forwarding Address"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={180} />
             ) : (
               exchangeData?.ForwardingAddress || "N/A"
@@ -93,7 +133,7 @@ export const CippExchangeInfoCard = (props) => {
         <PropertyListItem
           label="Archive Mailbox Enabled"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={60} />
             ) : (
               getCippFormatting(exchangeData?.ArchiveMailBox, "ArchiveMailBox")
@@ -103,7 +143,7 @@ export const CippExchangeInfoCard = (props) => {
         <PropertyListItem
           label="Auto Expanding Archive"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={80} />
             ) : (
               getCippFormatting(exchangeData?.AutoExpandingArchive, "AutoExpandingArchive")
@@ -113,7 +153,7 @@ export const CippExchangeInfoCard = (props) => {
         <PropertyListItem
           label="Total Archive Item Size"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={80} />
             ) : exchangeData?.TotalArchiveItemSize != null ? (
               `${exchangeData.TotalArchiveItemSize} GB`
@@ -126,7 +166,7 @@ export const CippExchangeInfoCard = (props) => {
           divider
           label="Total Archive Item Count"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={80} />
             ) : exchangeData?.TotalArchiveItemCount != null ? (
               exchangeData.TotalArchiveItemCount
@@ -135,14 +175,27 @@ export const CippExchangeInfoCard = (props) => {
             )
           }
         />
+        {/* Combine all mailbox hold types into a single PropertyListItem */}
         <PropertyListItem
           divider
-          label="Litigation Hold"
+          label="Mailbox Holds"
           value={
-            isFetching ? (
-              <Skeleton variant="text" width={60} />
+            isLoading ? (
+              <Skeleton variant="text" width={200} />
             ) : (
-              getCippFormatting(exchangeData?.LitigationHold, "LitigationHold")
+              <div>
+                {holds.map((hold) => (
+                  <Chip
+                    key={hold.name}
+                    label={hold.name}
+                    icon={hold.enabled ? <CheckIcon /> : <CloseIcon />}
+                    color={hold.enabled ? "success" : "default"}
+                    variant="outlined"
+                    size="small"
+                    sx={{ mr: 1, mb: 1 }}
+                  />
+                ))}
+              </div>
             )
           }
         />
@@ -151,7 +204,7 @@ export const CippExchangeInfoCard = (props) => {
           divider
           label="Mailbox Protocols"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={200} />
             ) : (
               <div>
@@ -174,7 +227,7 @@ export const CippExchangeInfoCard = (props) => {
           divider
           label="Blocked For Spam"
           value={
-            isFetching ? (
+            isLoading ? (
               <Skeleton variant="text" width={60} />
             ) : (
               getCippFormatting(exchangeData?.BlockedForSpam, "BlockedForSpam")
@@ -188,5 +241,7 @@ export const CippExchangeInfoCard = (props) => {
 
 CippExchangeInfoCard.propTypes = {
   exchangeData: PropTypes.object,
+  isLoading: PropTypes.bool,
   isFetching: PropTypes.bool,
+  handleRefresh: PropTypes.func,
 };
