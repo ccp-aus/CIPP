@@ -27,6 +27,7 @@ const Page = () => {
       },
       confirmText: "Are you sure you want to enable this device?",
       multiPost: false,
+      condition: (row) => !row.accountEnabled,
       icon: <CheckCircleOutline />,
     },
     {
@@ -39,14 +40,15 @@ const Page = () => {
       },
       confirmText: "Are you sure you want to disable this device?",
       multiPost: false,
+      condition: (row) => row.accountEnabled,
       icon: <Block />,
     },
     {
       label: "Retrieve BitLocker Keys",
-      type: "GET",
+      type: "POST",
       url: "/api/ExecGetRecoveryKey",
       data: {
-        GUID: "id",
+        GUID: "deviceId",
       },
       confirmText: "Are you sure you want to retrieve the BitLocker keys?",
       multiPost: false,
@@ -80,7 +82,7 @@ const Page = () => {
       simpleColumns={[
         "displayName",
         "accountEnabled",
-        "recipientType",
+        "trustType",
         "enrollmentType",
         "manufacturer",
         "model",
