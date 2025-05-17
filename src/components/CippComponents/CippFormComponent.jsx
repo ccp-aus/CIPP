@@ -43,6 +43,7 @@ export const CippFormComponent = (props) => {
     name, // The name that may have bracket notation
     label,
     labelLocation = "behind", // Default location for switches
+    defaultValue,
     ...other
   } = props;
   const { errors } = useFormState({ control: formControl.control });
@@ -121,6 +122,7 @@ export const CippFormComponent = (props) => {
               {...other}
               {...formControl.register(convertedName, { ...validators })}
               label={label}
+              defaultValue={defaultValue}
             />
           </div>
           <Typography variant="subtitle3" color="error">
@@ -153,9 +155,13 @@ export const CippFormComponent = (props) => {
             <TextField
               type="number"
               variant="filled"
+              InputLabelProps={{
+                shrink: true,
+              }}
               {...other}
               {...formControl.register(convertedName, { ...validators })}
               label={label}
+              defaultValue={defaultValue}
             />
           </div>
           <Typography variant="subtitle3" color="error">
@@ -171,6 +177,7 @@ export const CippFormComponent = (props) => {
             <Controller
               name={convertedName}
               control={formControl.control}
+              defaultValue={defaultValue}
               render={({ field }) =>
                 renderSwitchWithLabel(
                   <Switch
@@ -185,6 +192,11 @@ export const CippFormComponent = (props) => {
           <Typography variant="subtitle3" color="error">
             {get(errors, convertedName, {})?.message}
           </Typography>
+          {other.helperText && (
+            <Typography variant="subtitle3" color="text.secondary">
+              {other.helperText}
+            </Typography>
+          )}
         </>
       );
 
@@ -297,9 +309,12 @@ export const CippFormComponent = (props) => {
                   <RichTextEditor
                     {...other}
                     ref={field.ref}
+                    key={field.value ? "edit" : ""}
                     extensions={[StarterKit]}
-                    content={field.value}
-                    onUpdate={({ editor }) => field.onChange(editor.getHTML())} // Update react-hook-form on change
+                    content={field.value || ""}
+                    onUpdate={({ editor }) => {
+                      field.onChange(editor.getHTML());
+                    }}
                     label={label}
                     renderControls={() => (
                       <MenuControlsContainer>

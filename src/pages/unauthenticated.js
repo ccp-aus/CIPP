@@ -3,24 +3,27 @@ import Head from "next/head";
 import { CippImageCard } from "../components/CippCards/CippImageCard";
 import { Layout as DashboardLayout } from "../layouts/index.js";
 import { ApiGetCall } from "../api/ApiCall";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 const Page = () => {
   const orgData = ApiGetCall({
     url: "/.auth/me",
-    queryKey: "me",
+    queryKey: "authmecipp",
+    staleTime: 120000,
+    refetchOnWindowFocus: true,
   });
-  const blockedRoles = ["anonymous", "authenticated"];
+  const blockedRoles = useMemo(() => ["anonymous", "authenticated"], []);
   const [userRoles, setUserRoles] = useState([]);
+  const userRolesData = orgData.data?.clientPrincipal?.userRoles;
 
   useEffect(() => {
-    if (orgData.isSuccess) {
-      const roles = orgData.data?.clientPrincipal?.userRoles.filter(
+    if (orgData.isSuccess && userRolesData) {
+      const roles = userRolesData.filter(
         (role) => !blockedRoles.includes(role)
       );
       setUserRoles(roles ?? []);
     }
-  }, [orgData, blockedRoles]);
+  }, [orgData.isSuccess, userRolesData, blockedRoles]);
   return (
     <>
       <DashboardLayout>
@@ -48,10 +51,10 @@ const Page = () => {
                     <CippImageCard
                       isFetching={false}
                       imageUrl="/assets/illustrations/undraw_online_test_re_kyfx.svg"
-                      text="You're not allowed to be here, or are logged in under the wrong account. Hit the button below to return to the homepage."
+                      text="You're not allowed to be here, or are logged in under the wrong account."
                       title="Access Denied"
-                      linkText={userRoles.length > 0 ? "Return" : "Login"}
-                      link={userRoles.length > 0 ? "/" : "/.auth/login/aad"}
+                      linkText={userRoles.length > 0 ? "Return to Home" : "Login"}
+                      link={userRoles.length > 0 ? "/" : `/.auth/login/aad?post_login_redirect_uri=${encodeURIComponent(window.location.href)}`}
                     />
                   )}
                 </Grid>
