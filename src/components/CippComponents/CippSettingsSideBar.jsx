@@ -20,7 +20,8 @@ export const CippSettingsSideBar = (props) => {
   const { isDirty, isValid } = useFormState({ control: formcontrol.control });
 
   const currentUser = ApiGetCall({
-    url: "/.auth/me",
+    url: "/api/me",
+    queryKey: "authmecipp",
   });
 
   const saveSettingsPost = ApiPostCall({

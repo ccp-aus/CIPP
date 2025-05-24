@@ -7,9 +7,17 @@ import { useState, useEffect } from "react";
 
 const Page = () => {
   const orgData = ApiGetCall({
-    url: "/.auth/me",
-    queryKey: "me",
+    url: "/api/me",
+    queryKey: "authmecipp",
   });
+
+  const swaStatus = ApiGetCall({
+    url: "/.auth/me",
+    queryKey: "authmeswa",
+    staleTime: 120000,
+    refetchOnWindowFocus: true,
+  });
+
   const blockedRoles = ["anonymous", "authenticated"];
   const [userRoles, setUserRoles] = useState([]);
 
@@ -44,14 +52,24 @@ const Page = () => {
                 sx={{ height: "100%" }} // Ensure the container takes full height
               >
                 <Grid item xs={12} md={6}>
-                  {orgData.isSuccess && Array.isArray(userRoles) && (
+                  {(orgData.isSuccess || swaStatus.isSuccess) && Array.isArray(userRoles) && (
                     <CippImageCard
                       isFetching={false}
                       imageUrl="/assets/illustrations/undraw_online_test_re_kyfx.svg"
-                      text="You're not allowed to be here, or are logged in under the wrong account. Hit the button below to return to the homepage."
+                      text="You're not allowed to be here, or are logged in under the wrong account."
                       title="Access Denied"
-                      linkText={userRoles.length > 0 ? "Return" : "Login"}
-                      link={userRoles.length > 0 ? "/" : "/.auth/login/aad"}
+                      linkText={
+                        swaStatus?.data?.clientPrincipal !== null && userRoles.length > 0
+                          ? "Return to Home"
+                          : "Login"
+                      }
+                      link={
+                        swaStatus?.data?.clientPrincipal !== null && userRoles.length > 0
+                          ? "/"
+                          : `/.auth/login/aad?post_login_redirect_uri=${encodeURIComponent(
+                              window.location.href
+                            )}`
+                      }
                     />
                   )}
                 </Grid>

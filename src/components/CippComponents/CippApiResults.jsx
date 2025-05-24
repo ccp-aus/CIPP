@@ -1,4 +1,4 @@
-import { Close, Download, RouterOutlined } from "@mui/icons-material";
+import { Close, Download } from "@mui/icons-material";
 import {
   Alert,
   CircularProgress,
@@ -38,7 +38,7 @@ const extractAllResults = (data) => {
 
     if (item && typeof item === "object") {
       const text = item.resultText || "";
-      const copyField = item.copyField || text;
+      const copyField = item.copyField || "";
       const severity =
         typeof item.state === "string" ? item.state : getSeverity(item) ? "error" : "success";
 
@@ -47,6 +47,7 @@ const extractAllResults = (data) => {
           text,
           copyField,
           severity,
+          ...item,
         };
       }
     }
@@ -158,12 +159,12 @@ export const CippApiResults = (props) => {
   useEffect(() => {
     setErrorVisible(!!apiObject.isError);
 
+    if (apiObject.isFetching || (apiObject.isIdle === false && apiObject.isPending === true)) {
+      setFetchingVisible(true);
+    } else {
+      setFetchingVisible(false);
+    }
     if (!errorsOnly) {
-      if (apiObject.isFetching || (apiObject.isIdle === false && apiObject.isPending === true)) {
-        setFetchingVisible(true);
-      } else {
-        setFetchingVisible(false);
-      }
       if (allResults.length > 0) {
         setFinalResults(
           allResults.map((res, index) => ({
@@ -172,6 +173,7 @@ export const CippApiResults = (props) => {
             copyField: res.copyField,
             severity: res.severity,
             visible: true,
+            ...res,
           }))
         );
       } else {
@@ -216,29 +218,28 @@ export const CippApiResults = (props) => {
   return (
     <Stack spacing={2}>
       {/* Loading alert */}
-      {!errorsOnly && (
-        <Collapse in={fetchingVisible} unmountOnExit>
-          <Alert
-            sx={alertSx}
-            action={
-              <IconButton
-                aria-label="close"
-                color="inherit"
-                size="small"
-                onClick={() => setFetchingVisible(false)}
-              >
-                <Close fontSize="inherit" />
-              </IconButton>
-            }
-            variant="outlined"
-            severity="info"
-          >
-            <Typography variant="body2">
-              <CircularProgress size={20} /> Loading...
-            </Typography>
-          </Alert>
-        </Collapse>
-      )}
+
+      <Collapse in={fetchingVisible} unmountOnExit>
+        <Alert
+          sx={alertSx}
+          action={
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              size="small"
+              onClick={() => setFetchingVisible(false)}
+            >
+              <Close fontSize="inherit" />
+            </IconButton>
+          }
+          variant="outlined"
+          severity="info"
+        >
+          <Typography variant="body2">
+            <CircularProgress size={20} /> Loading...
+          </Typography>
+        </Alert>
+      </Collapse>
 
       {/* Error alert */}
       <Collapse in={errorVisible} unmountOnExit>

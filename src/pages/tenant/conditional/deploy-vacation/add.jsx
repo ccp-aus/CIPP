@@ -56,6 +56,8 @@ const Page = () => {
                 formControl={formControl}
                 name="UserId"
                 multiple={false}
+                validators={{ required: "Picking a user is required" }}
+                required={true}
               />
             </Grid>
 
@@ -73,6 +75,15 @@ const Page = () => {
                 }}
                 multiple={false}
                 formControl={formControl}
+                validators={{
+                  validate: (option) => {
+                    if (!option?.value) {
+                      return "Picking a policy is required";
+                    }
+                    return true;
+                  },
+                }}
+                required={true}
               />
             </Grid>
 
@@ -84,6 +95,15 @@ const Page = () => {
                 name="startDate"
                 dateTimeType="dateTime"
                 formControl={formControl}
+                required={true}
+                validators={{
+                  validate: (value) => {
+                    if (!value) {
+                      return "Start date is required";
+                    }
+                    return true;
+                  },
+                }}
               />
             </Grid>
 
@@ -95,6 +115,19 @@ const Page = () => {
                 name="endDate"
                 dateTimeType="dateTime"
                 formControl={formControl}
+                required={true}
+                validators={{
+                  validate: (value) => {
+                    const startDate = formControl.getValues("startDate");
+                    if (!value) {
+                      return "End date is required";
+                    }
+                    if (startDate && value && new Date(value * 1000) < new Date(startDate * 1000)) {
+                      return "End date must be after start date";
+                    }
+                    return true;
+                  },
+                }}
               />
             </Grid>
           </Grid>
