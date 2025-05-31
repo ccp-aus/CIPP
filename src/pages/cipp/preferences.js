@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { Box, Container, Stack } from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import { Grid } from "@mui/system";
 import { Layout as DashboardLayout } from "/src/layouts/index.js";
 import { CippPropertyListCard } from "../../components/CippCards/CippPropertyListCard";
 import CippFormComponent from "../../components/CippComponents/CippFormComponent";
@@ -9,10 +9,17 @@ import { useSettings } from "../../hooks/use-settings";
 import countryList from "../../data/countryList.json";
 import { CippSettingsSideBar } from "../../components/CippComponents/CippSettingsSideBar";
 import CippDevOptions from "/src/components/CippComponents/CippDevOptions";
+import { ApiGetCall } from "../../api/ApiCall";
+import { getCippFormatting } from "../../utils/get-cipp-formatting";
 
 const Page = () => {
   const settings = useSettings();
   const formcontrol = useForm({ mode: "onChange", defaultValues: settings });
+
+  const auth = ApiGetCall({
+    url: "/api/me",
+    queryKey: "authmecipp",
+  });
 
   const addedAttributes = [
     { value: "consentProvidedForMinor", label: "consentProvidedForMinor" },
@@ -26,6 +33,8 @@ const Page = () => {
     { value: "otherMails", label: "otherMails" },
     { value: "showInAddressList", label: "showInAddressList" },
     { value: "state", label: "state" },
+    { value: "city", label: "city" },
+    { value: "sponsor", label: "sponsor" },
   ];
 
   const pageSizes = [
@@ -56,30 +65,15 @@ const Page = () => {
                 <Grid size={{ xs: 12, lg: 8 }}>
                   <Stack spacing={3}>
                     <CippPropertyListCard
-                      layout="two"
                       showDivider={false}
                       title="General Settings"
                       propertyItems={[
-                        {
-                          label: "Added Attributes when creating a new user",
-                          value: (
-                            <CippFormComponent
-                              type="autoComplete"
-                              options={addedAttributes}
-                              sx={{ width: "250px" }}
-                              name="userAttributes"
-                              formControl={formcontrol}
-                              multiple={true}
-                            />
-                          ),
-                        },
                         {
                           label: "Default new user usage location",
                           value: (
                             <CippFormComponent
                               type="autoComplete"
                               creatable={false}
-                              sx={{ width: "250px" }}
                               disableClearable={true}
                               name="usageLocation"
                               formControl={formcontrol}
@@ -96,7 +90,6 @@ const Page = () => {
                           value: (
                             <CippFormComponent
                               type="autoComplete"
-                              sx={{ width: "250px" }}
                               disableClearable={true}
                               defaultValue={{ value: "25", label: "25" }}
                               name="tablePageSize"
@@ -110,21 +103,14 @@ const Page = () => {
                           ),
                         },
                         {
-                          label: "Menu Favourites",
+                          label: "Added Attributes when creating a new user",
                           value: (
                             <CippFormComponent
                               type="autoComplete"
-                              sx={{ width: "250px" }}
-                              disableClearable={true}
-                              name="userSettingsDefaults.favourites"
+                              options={addedAttributes}
+                              name="userAttributes"
                               formControl={formcontrol}
-                              multiple={false}
-                              options={[
-                                { value: "25", label: "25" },
-                                { value: "50", label: "50" },
-                                { value: "100", label: "100" },
-                                { value: "250", label: "250" },
-                              ]}
+                              multiple={true}
                             />
                           ),
                         },
@@ -281,6 +267,17 @@ const Page = () => {
                 </Grid>
                 <Grid size={{ xs: 12, lg: 4 }}>
                   <Stack spacing={3}>
+                    <CippPropertyListCard
+                      title={`CIPP Roles for ${auth?.data?.clientPrincipal?.userDetails}`}
+                      propertyItems={(auth?.data?.clientPrincipal?.userRoles ?? [])
+                        .filter((role) => !["anonymous", "authenticated"].includes(role))
+                        .map((role) => ({
+                          label: "",
+                          value: getCippFormatting(role, "role"),
+                        }))}
+                      showDivider={false}
+                    />
+
                     <CippSettingsSideBar formcontrol={formcontrol} />
                     <CippDevOptions />
                   </Stack>

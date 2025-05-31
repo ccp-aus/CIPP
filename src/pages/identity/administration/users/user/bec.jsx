@@ -11,7 +11,7 @@ import tabOptions from "./tabOptions";
 import ReactTimeAgo from "react-time-ago";
 import { CippCopyToClipBoard } from "../../../../../components/CippComponents/CippCopyToClipboard";
 import { Box, Stack } from "@mui/system";
-import Grid from "@mui/material/Grid2";
+import { Grid } from "@mui/system";
 import CippRemediationCard from "../../../../../components/CippCards/CippRemediationCard";
 import CippButtonCard from "../../../../../components/CippCards/CippButtonCard";
 import { SvgIcon, Typography, CircularProgress, Button } from "@mui/material";
@@ -58,7 +58,11 @@ const Page = () => {
 
   // Fetch BEC Check result using GUID
   const becPollingCall = ApiGetCall({
-    url: `/api/execBECCheck?GUID=${becInitialCall.data?.GUID}`,
+    url: `/api/execBECCheck`,
+    data: {
+      GUID: becInitialCall.data?.GUID,
+      tenantFilter: userSettingsDefaults.currentTenant,
+    },
     queryKey: `execBECCheck-polling-${becInitialCall.data?.GUID}`,
     waiting: false,
   });
@@ -111,7 +115,7 @@ const Page = () => {
   const getUserMessage = () => {
     if (!becPollingCall.data) return null;
     if (becPollingCall.data.NewUsers && becPollingCall.data.NewUsers.length > 0) {
-      return "Suspicious new users have been found in the last 14 days. Please review the list below and take action as needed.";
+      return "New users have been found in the last 14 days. Please review the list below and take action as needed.";
     }
     return "No new users found.";
   };
@@ -126,7 +130,7 @@ const Page = () => {
       if (hasPotentialBreach) {
         return "Potential Breach found.";
       }
-      return "Suspicious new applications have been found. Please review the list below and take action as needed.";
+      return "New applications have been found. Please review the list below and take action as needed.";
     }
     return "No new applications found.";
   };
@@ -137,7 +141,7 @@ const Page = () => {
       becPollingCall.data.MailboxPermissionChanges &&
       becPollingCall.data.MailboxPermissionChanges.length > 0
     ) {
-      return "Suspicious mailbox permission changes have been found.";
+      return "Mailbox permission changes have been found.";
     }
     return "No mailbox permission changes found.";
   };

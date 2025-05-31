@@ -11,11 +11,11 @@ import {
   CardActions,
 } from "@mui/material";
 import ArrowLeftIcon from "@mui/icons-material/ArrowLeft";
-import Head from "next/head";
 import { ApiPostCall } from "../../api/ApiCall";
 import { CippApiResults } from "../CippComponents/CippApiResults";
 import { useEffect } from "react";
 import { useFormState } from "react-hook-form";
+import { CippHead } from "../CippComponents/CippHead";
 
 const CippFormPage = (props) => {
   const {
@@ -70,6 +70,11 @@ const CippFormPage = (props) => {
   }, [postCall.isSuccess]);
 
   const handleSubmit = () => {
+    formControl.trigger();
+    // Check if the form is valid before proceeding
+    if (!isValid) {
+      return;
+    }
     const values = customDataformatter
       ? customDataformatter(formControl.getValues())
       : formControl.getValues();
@@ -86,9 +91,7 @@ const CippFormPage = (props) => {
   };
   return (
     <>
-      <Head>
-        <title>{title}</title>
-      </Head>
+      <CippHead title={title} />
       <Box
         sx={{
           flexGrow: 1,

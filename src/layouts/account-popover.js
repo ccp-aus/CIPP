@@ -9,19 +9,18 @@ import SunIcon from "@heroicons/react/24/outline/SunIcon";
 import {
   Avatar,
   Box,
-  FormControlLabel,
+  CircularProgress,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Popover,
+  Skeleton,
   Stack,
   SvgIcon,
-  Switch,
   Typography,
   useMediaQuery,
-  IconButton,
 } from "@mui/material";
 import { usePopover } from "../hooks/use-popover";
 import { paths } from "../paths";
@@ -41,8 +40,8 @@ export const AccountPopover = (props) => {
   const popover = usePopover();
 
   const orgData = ApiGetCall({
-    url: "/.auth/me",
-    queryKey: "me",
+    url: "/api/me",
+    queryKey: "authmecipp",
   });
 
   const handleLogout = useCallback(async () => {
@@ -90,16 +89,22 @@ export const AccountPopover = (props) => {
             <>
               <Box sx={{ minWidth: 100 }}>
                 <Typography color="neutral.400" variant="caption">
-                  {orgData.data?.Org?.Domain}
+                  {orgData.data?.clientPrincipal?.userDetails?.split("@")?.[1]}
                 </Typography>
                 <Typography color="inherit" variant="subtitle2">
                   {orgData.data?.clientPrincipal?.userDetails ?? "Not logged in"}
                 </Typography>
               </Box>
               {orgData.data?.clientPrincipal?.userDetails && (
-                <SvgIcon color="action" fontSize="small">
-                  <ChevronDownIcon />
-                </SvgIcon>
+                <>
+                  {orgData?.isFetching ? (
+                    <CircularProgress size={20} color="textPrimary" />
+                  ) : (
+                    <SvgIcon color="action" fontSize="small">
+                      <ChevronDownIcon />
+                    </SvgIcon>
+                  )}
+                </>
               )}
             </>
           )}

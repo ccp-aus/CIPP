@@ -1,4 +1,4 @@
-import { DeveloperMode, SevereCold, Sync, Tune, ViewColumn } from "@mui/icons-material";
+import { DeveloperMode, SevereCold, Sync, Tune, ViewColumn, MoreVert } from "@mui/icons-material";
 import {
   Button,
   Checkbox,
@@ -12,7 +12,11 @@ import {
   Typography,
 } from "@mui/material";
 import { Box, Stack } from "@mui/system";
-import { MRT_GlobalFilterTextField, MRT_ToggleFiltersButton } from "material-react-table";
+import {
+  MRT_GlobalFilterTextField,
+  MRT_ToggleFiltersButton,
+  MRT_ToggleFullScreenButton,
+} from "material-react-table";
 import { PDFExportButton } from "../pdfExportButton";
 import { ChevronDownIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { usePopover } from "../../hooks/use-popover";
@@ -28,6 +32,7 @@ import { CippCodeBlock } from "../CippComponents/CippCodeBlock";
 import { ApiGetCall } from "../../api/ApiCall";
 import GraphExplorerPresets from "/src/data/GraphExplorerPresets.json";
 import CippGraphExplorerFilter from "./CippGraphExplorerFilter";
+import { useMediaQuery } from "@mui/material";
 
 export const CIPPTableToptoolbar = ({
   api,
@@ -53,6 +58,7 @@ export const CIPPTableToptoolbar = ({
   const columnPopover = usePopover();
   const filterPopover = usePopover();
 
+  const mdDown = useMediaQuery((theme) => theme.breakpoints.down("md"));
   const settings = useSettings();
   const router = useRouter();
   const createDialog = useDialog();
@@ -64,6 +70,18 @@ export const CIPPTableToptoolbar = ({
   const pageName = router.pathname.split("/").slice(1).join("/");
   const currentTenant = useSettings()?.currentTenant;
 
+  const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
+  const handleActionMenuOpen = (event) => setActionMenuAnchor(event.currentTarget);
+  const handleActionMenuClose = () => setActionMenuAnchor(null);
+
+  const getBulkActions = (actions) => {
+    return actions?.filter((action) => !action.link && !action?.hideBulk) || [];
+  };
+
+  useEffect(() => {
+    //if usedData changes, deselect all rows
+    table.toggleAllRowsSelected(false);
+  }, [usedData]);
   //if the currentTenant Switches, remove Graph filters
   useEffect(() => {
     if (currentTenant) {
@@ -270,7 +288,15 @@ export const CIPPTableToptoolbar = ({
           justifyContent: "space-between",
         })}
       >
-        <Box sx={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: "0.5rem",
+            alignItems: "center",
+            width: "100%",
+            flexWrap: "wrap",
+          }}
+        >
           <>
             <Tooltip
               title={
@@ -324,7 +350,6 @@ export const CIPPTableToptoolbar = ({
                 </IconButton>
               </div>
             </Tooltip>
-
             <MRT_GlobalFilterTextField table={table} />
             <Tooltip title="Preset Filters">
               <IconButton onClick={filterPopover.handleOpen} ref={filterPopover.anchorRef}>
@@ -344,6 +369,7 @@ export const CIPPTableToptoolbar = ({
               </MenuItem>
               {api?.url === "/api/ListGraphRequest" && (
                 <MenuItem
+                  key="custom-filter"
                   onClick={() => {
                     filterPopover.handleClose();
                     setFilterCanvasVisible(true);
@@ -404,27 +430,39 @@ export const CIPPTableToptoolbar = ({
                   </MenuItem>
                 ))}
             </Menu>
-            {exportEnabled && (
-              <>
-                <PDFExportButton
-                  rows={table.getFilteredRowModel().rows}
-                  columns={usedColumns}
-                  reportName={title}
-                  columnVisibility={columnVisibility}
-                />
-                <CSVExportButton
-                  reportName={title}
-                  columnVisibility={columnVisibility}
-                  rows={table.getFilteredRowModel().rows}
-                  columns={usedColumns}
-                />
-              </>
-            )}
-            <Tooltip title="View API Response">
-              <IconButton onClick={() => setOffcanvasVisible(true)}>
-                <DeveloperMode />
-              </IconButton>
-            </Tooltip>
+
+            <>
+              {exportEnabled && (
+                <>
+                  <PDFExportButton
+                    rows={table.getFilteredRowModel().rows}
+                    columns={usedColumns}
+                    reportName={title}
+                    columnVisibility={columnVisibility}
+                  />
+                  <CSVExportButton
+                    reportName={title}
+                    columnVisibility={columnVisibility}
+                    rows={table.getFilteredRowModel().rows}
+                    columns={usedColumns}
+                  />
+                </>
+              )}
+              <Tooltip title="View API Response">
+                <IconButton onClick={() => setOffcanvasVisible(true)}>
+                  <DeveloperMode />
+                </IconButton>
+              </Tooltip>
+              {mdDown && <MRT_ToggleFullScreenButton table={table} />}
+            </>
+            {
+              //add a little icon with how many rows are selected
+              (table.getIsAllRowsSelected() || table.getIsSomeRowsSelected()) && (
+                <Typography variant="body2" sx={{ alignSelf: "center" }}>
+                  {table.getSelectedRowModel().rows.length} rows selected
+                </Typography>
+              )
+            }
             <CippOffCanvas
               size="xl"
               title="API Response"
@@ -439,6 +477,7 @@ export const CIPPTableToptoolbar = ({
                   type="editor"
                   code={JSON.stringify(usedData, null, 2)}
                   editorHeight="1000px"
+                  showLineNumbers={!mdDown}
                 />
               </Stack>
             </CippOffCanvas>
@@ -451,7 +490,7 @@ export const CIPPTableToptoolbar = ({
                 <SevereCold />
               </Tooltip>
             )}
-            {actions && (table.getIsSomeRowsSelected() || table.getIsAllRowsSelected()) && (
+            {actions && getBulkActions(actions).length > 0 && (table.getIsSomeRowsSelected() || table.getIsAllRowsSelected()) && (
               <>
                 <Button
                   onClick={popover.handleOpen}
@@ -486,36 +525,34 @@ export const CIPPTableToptoolbar = ({
                     vertical: "top",
                   }}
                 >
-                  {actions
-                    ?.filter((action) => !action.link && !action?.hideBulk)
-                    .map((action, index) => (
-                      <MenuItem
-                        key={index}
-                        onClick={() => {
-                          setActionData({
-                            data: table.getSelectedRowModel().rows.map((row) => row.original),
-                            action: action,
-                            ready: true,
-                          });
+                  {getBulkActions(actions).map((action, index) => (
+                    <MenuItem
+                      key={index}
+                      onClick={() => {
+                        setActionData({
+                          data: table.getSelectedRowModel().rows.map((row) => row.original),
+                          action: action,
+                          ready: true,
+                        });
 
-                          if (action?.noConfirm && action.customFunction) {
-                            table
-                              .getSelectedRowModel()
-                              .rows.map((row) =>
-                                action.customFunction(row.original.original, action, {})
-                              );
-                          } else {
-                            createDialog.handleOpen();
-                            popover.handleClose();
-                          }
-                        }}
-                      >
-                        <SvgIcon fontSize="small" sx={{ minWidth: "30px" }}>
-                          {action.icon}
-                        </SvgIcon>
-                        <ListItemText>{action.label}</ListItemText>
-                      </MenuItem>
-                    ))}
+                        if (action?.noConfirm && action.customFunction) {
+                          table
+                            .getSelectedRowModel()
+                            .rows.map((row) =>
+                              action.customFunction(row.original.original, action, {})
+                            );
+                        } else {
+                          createDialog.handleOpen();
+                          popover.handleClose();
+                        }
+                      }}
+                    >
+                      <SvgIcon fontSize="small" sx={{ minWidth: "30px" }}>
+                        {action.icon}
+                      </SvgIcon>
+                      <ListItemText>{action.label}</ListItemText>
+                    </MenuItem>
+                  ))}
                 </Menu>
               </>
             )}
