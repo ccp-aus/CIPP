@@ -87,7 +87,7 @@ export const CippPropertyListCard = (props) => {
             </PropertyList>
           ) : (
             // Two-column layout
-            <Stack
+            (<Stack
               direction={{
                 xs: "column",
                 md: "row",
@@ -142,7 +142,7 @@ export const CippPropertyListCard = (props) => {
                   ))
                 )}
               </PropertyList>
-            </Stack>
+            </Stack>)
           )}
         </CardContent>
         <ActionList>
@@ -152,22 +152,18 @@ export const CippPropertyListCard = (props) => {
                 key={`${item.label}-${index}-ActionList-OffCanvas`}
                 icon={<SvgIcon fontSize="small">{item.icon}</SvgIcon>}
                 label={item.label}
-                onClick={
-                  item.link
-                    ? () => window.open(item.link, "_blank")
-                    : () => {
-                        setActionData({
-                          data: data,
-                          action: item,
-                          ready: true,
-                        });
-                        if (item?.noConfirm) {
-                          item.customFunction(item, data, {});
-                        } else {
-                          createDialog.handleOpen();
-                        }
-                      }
-                }
+                onClick={() => {
+                  setActionData({
+                    data: data,
+                    action: item,
+                    ready: true,
+                  });
+                  if (item?.noConfirm) {
+                    item.customFunction(item, data, {});
+                  } else {
+                    createDialog.handleOpen();
+                  }
+                }}
                 disabled={handleActionDisabled(data, item)}
               />
             ))}
