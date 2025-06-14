@@ -15,6 +15,7 @@ import {
   Archive,
   AutoMode,
   Recycling,
+  ManageAccounts,
 } from "@mui/icons-material";
 
 const Page = () => {
@@ -23,13 +24,50 @@ const Page = () => {
 
   const actions = [
     {
-      label: "View in InTune",
+      label: "View in Intune",
       link: `https://intune.microsoft.com/${tenantFilter}/#view/Microsoft_Intune_Devices/DeviceSettingsMenuBlade/~/overview/mdmDeviceId/[id]`,
       color: "info",
       icon: <EyeIcon />,
       target: "_blank",
       multiPost: false,
       external: true,
+    },
+    {
+      label: "Change Primary User",
+      type: "POST",
+      icon: <ManageAccounts />,
+      url: "/api/ExecDeviceAction",
+      data: {
+        GUID: "id",
+        Action: "!users",
+      },
+      fields: [
+        {
+          type: "autoComplete",
+          name: "user",
+          label: "Select User",
+          multiple: false,
+          creatable: false,
+          api: {
+            url: "/api/ListGraphRequest",
+            data: {
+              Endpoint: "users",
+              $select: "id,displayName,userPrincipalName",
+              $top: 999,
+              $count: true,
+            },
+            queryKey: "ListUsersAutoComplete",
+            dataKey: "Results",
+            labelField: (user) => `${user.displayName} (${user.userPrincipalName})`,
+            valueField: "id",
+            addedField: {
+              userPrincipalName: "userPrincipalName",
+            },
+            showRefresh: true,
+          },
+        },
+      ],
+      confirmText: "Select the User to set as the primary user for this device",
     },
     {
       label: "Sync Device",
@@ -128,7 +166,8 @@ const Page = () => {
         GUID: "id",
         Action: "windowsDefenderUpdateSignatures",
       },
-      confirmText: "Are you sure you want to update the Windows Defender signatures for this device?",
+      confirmText:
+        "Are you sure you want to update the Windows Defender signatures for this device?",
     },
     {
       label: "Generate logs and ship to MEM",
@@ -216,7 +255,8 @@ const Page = () => {
         keepUserData: false,
         useProtectedWipe: true,
       },
-      confirmText: "Are you sure you want to wipe this device? This will retain enrollment data. Continuing at powerloss may cause boot issues if wipe is interrupted.",
+      confirmText:
+        "Are you sure you want to wipe this device? This will retain enrollment data. Continuing at powerloss may cause boot issues if wipe is interrupted.",
     },
     {
       label: "Wipe Device, remove enrollment data, and continue at powerloss",
@@ -230,7 +270,8 @@ const Page = () => {
         keepUserData: false,
         useProtectedWipe: true,
       },
-      confirmText: "Are you sure you want to wipe this device? This will also remove enrollment data. Continuing at powerloss may cause boot issues if wipe is interrupted.",
+      confirmText:
+        "Are you sure you want to wipe this device? This will also remove enrollment data. Continuing at powerloss may cause boot issues if wipe is interrupted.",
     },
     {
       label: "Autopilot Reset",
@@ -244,6 +285,17 @@ const Page = () => {
         keepEnrollmentData: "true",
       },
       confirmText: "Are you sure you want to Autopilot Reset this device?",
+    },
+    {
+      label: "Delete device",
+      type: "POST",
+      icon: <Recycling />,
+      url: "/api/ExecDeviceAction",
+      data: {
+        GUID: "id",
+        Action: "delete",
+      },
+      confirmText: "Are you sure you want to retire this device?",
     },
     {
       label: "Retire device",
@@ -268,6 +320,7 @@ const Page = () => {
       title={pageTitle}
       apiUrl="/api/ListDevices"
       actions={actions}
+      queryKey={`MEMDevices-${tenantFilter}`}
       offCanvas={offCanvas}
       simpleColumns={[
         "deviceName",

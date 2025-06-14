@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { Avatar, Card, CardHeader, Divider, Skeleton, Stack } from "@mui/material";
+import { Avatar, Card, CardHeader, Divider, Skeleton, Stack, Alert } from "@mui/material";
 import { PropertyList } from "/src/components/property-list";
 import { PropertyListItem } from "/src/components/property-list-item";
 import { getCippFormatting } from "../../utils/get-cipp-formatting";
@@ -41,6 +41,10 @@ export const CippUserInfoCard = (props) => {
         value={
           isFetching ? (
             <Skeleton variant="text" width={60} />
+          ) : !user?.accountEnabled ? (
+            <Alert severity="info" sx={{ py: 0, px: 1 }}>
+              This account is disabled
+            </Alert>
           ) : (
             getCippFormatting(user?.accountEnabled, "accountEnabled")
           )
@@ -86,6 +90,10 @@ export const CippUserInfoCard = (props) => {
           value={
             isFetching ? (
               <Skeleton variant="text" width={180} />
+            ) : !user?.assignedLicenses || user?.assignedLicenses.length === 0 ? (
+              <Alert severity="info" sx={{ py: 0, px: 1 }}>
+                No licenses assigned to this user
+              </Alert>
             ) : (
               getCippFormatting(user?.assignedLicenses, "assignedLicenses")
             )
@@ -112,9 +120,13 @@ export const CippUserInfoCard = (props) => {
           value={isFetching ? <Skeleton variant="text" width={100} /> : user?.jobTitle || "N/A"}
         />
         <PropertyListItem
-          divider
           label="Department"
           value={isFetching ? <Skeleton variant="text" width={100} /> : user?.department || "N/A"}
+        />
+        <PropertyListItem
+          divider
+          label="Manager"
+          value={isFetching ? <Skeleton variant="text" width={100} /> : user?.manager?.displayName || "N/A"}
         />
         <PropertyListItem
           label="Address"
@@ -125,6 +137,14 @@ export const CippUserInfoCard = (props) => {
         <PropertyListItem
           label="Postal code"
           value={isFetching ? <Skeleton variant="text" width={100} /> : user?.postalCode || "N/A"}
+        />
+        <PropertyListItem
+          label="City"
+          value={isFetching ? <Skeleton variant="text" width={100} /> : user?.city || "N/A"}
+        />
+        <PropertyListItem
+          label="Country"
+          value={isFetching ? <Skeleton variant="text" width={100} /> : user?.country || "N/A"}
         />
         <PropertyListItem
           divider

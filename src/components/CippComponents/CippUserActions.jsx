@@ -8,6 +8,7 @@ import {
   Email,
   ForwardToInbox,
   GroupAdd,
+  LockClock,
   LockOpen,
   LockPerson,
   LockReset,
@@ -53,7 +54,7 @@ export const CippUserActions = () => {
       //tested
 
       label: "Create Temporary Access Password",
-      type: "GET",
+      type: "POST",
       icon: <Password />,
       url: "/api/ExecCreateTAP",
       data: { ID: "userPrincipalName" },
@@ -63,7 +64,7 @@ export const CippUserActions = () => {
     {
       //tested
       label: "Re-require MFA registration",
-      type: "GET",
+      type: "POST",
       icon: <PhonelinkSetup />,
       url: "/api/ExecResetMFA",
       data: { ID: "userPrincipalName" },
@@ -107,26 +108,26 @@ export const CippUserActions = () => {
     {
       //tested
       label: "Convert to Shared Mailbox",
-      type: "GET",
+      type: "POST",
       icon: <Email />,
-      url: "/api/ExecConvertToSharedMailbox",
-      data: { ID: "userPrincipalName" },
+      url: "/api/ExecConvertMailbox",
+      data: { ID: "userPrincipalName", MailboxType: "!Shared" },
       confirmText: "Are you sure you want to convert this user to a shared mailbox?",
       multiPost: false,
     },
     {
       label: "Convert to User Mailbox",
-      type: "GET",
+      type: "POST",
       icon: <Email />,
-      url: "/api/ExecConvertToSharedMailbox",
-      data: { ID: "userPrincipalName", ConvertToUser: true },
+      url: "/api/ExecConvertMailbox",
+      data: { ID: "userPrincipalName", MailboxType: "!Regular" },
       confirmText: "Are you sure you want to convert this user to a user mailbox?",
       multiPost: false,
     },
     {
       //tested
       label: "Enable Online Archive",
-      type: "GET",
+      type: "POST",
       icon: <Archive />,
       url: "/api/ExecEnableArchive",
       data: { ID: "userPrincipalName" },
@@ -154,7 +155,10 @@ export const CippUserActions = () => {
       type: "POST",
       icon: <NoMeetingRoom />,
       url: "/api/ExecSetOoO",
-      data: { user: "userPrincipalName", AutoReplyState: "Disabled" },
+      data: {
+        userId: "userPrincipalName",
+        AutoReplyState: { value: "Disabled" },
+      },
       confirmText: "Are you sure you want to disable the out of office?",
       multiPost: false,
     },
@@ -184,6 +188,47 @@ export const CippUserActions = () => {
         },
       ],
       confirmText: "Are you sure you want to add the user to this group?",
+    },
+    {
+      label: "Manage Licenses",
+      type: "POST",
+      url: "/api/ExecBulkLicense",
+      icon: <CloudDone />,
+      data: { userIds: "id" },
+      multiPost: true,
+      fields: [
+        {
+          type: "radio",
+          name: "LicenseOperation",
+          label: "License Operation",
+          options: [
+            { label: "Add Licenses", value: "Add" },
+            { label: "Remove Licenses", value: "Remove" },
+            { label: "Replace Licenses", value: "Replace" },
+          ],
+          required: true,
+        },
+        {
+          type: "switch",
+          name: "RemoveAllLicenses",
+          label: "Remove All Existing Licenses",
+        },
+        {
+          type: "autoComplete",
+          name: "Licenses",
+          label: "Select Licenses",
+          multiple: true,
+          creatable: false,
+          api: {
+            url: "/api/ListLicenses",
+            labelField: "skuPartNumber",
+            valueField: "skuId",
+            queryKey: `licenses-${tenant}`,
+          },
+        },
+      ],
+      confirmText: "Are you sure you want to manage licenses for the selected users?",
+      multiPost: true,
     },
     {
       label: "Disable Email Forwarding",
@@ -222,7 +267,7 @@ export const CippUserActions = () => {
           name: "siteUrl",
           label: "Select a Site",
           multiple: false,
-          creatable: false,
+          creatable: true,
           api: {
             url: "/api/ListSites",
             data: { type: "SharePointSiteUsage", URLOnly: true },
@@ -237,7 +282,7 @@ export const CippUserActions = () => {
     },
     {
       label: "Block Sign In",
-      type: "GET",
+      type: "POST",
       icon: <Block />,
       url: "/api/ExecDisableUser",
       data: { ID: "id" },
@@ -247,7 +292,7 @@ export const CippUserActions = () => {
     },
     {
       label: "Unblock Sign In",
-      type: "GET",
+      type: "POST",
       icon: <LockOpen />,
       url: "/api/ExecDisableUser",
       data: { ID: "id", Enable: true },
@@ -257,7 +302,7 @@ export const CippUserActions = () => {
     },
     {
       label: "Reset Password (Must Change)",
-      type: "GET",
+      type: "POST",
       icon: <LockReset />,
       url: "/api/ExecResetPass",
       data: {
@@ -271,7 +316,7 @@ export const CippUserActions = () => {
     },
     {
       label: "Reset Password",
-      type: "GET",
+      type: "POST",
       icon: <LockReset />,
       url: "/api/ExecResetPass",
       data: {
@@ -280,6 +325,29 @@ export const CippUserActions = () => {
         displayName: "displayName",
       },
       confirmText: "Are you sure you want to reset the password for this user?",
+      multiPost: false,
+    },
+    {
+      label: "Set Password Never Expires",
+      type: "POST",
+      icon: <LockClock />,
+      url: "/api/ExecPasswordNeverExpires",
+      data: { userId: "id", userPrincipalName: "userPrincipalName" },
+      fields: [
+        {
+          type: "autoComplete",
+          name: "PasswordPolicy",
+          label: "Password Policy",
+          options: [
+            { label: "Disable Password Expiration", value: "DisablePasswordExpiration" },
+            { label: "Enable Password Expiration", value: "None" },
+          ],
+          multiple: false,
+          creatable: false,
+        },
+      ],
+      confirmText:
+        "Set Password Never Expires state for this user. If the password of the user is older than the set expiration date of the organization, the user will be prompted to change their password at their next login.",
       multiPost: false,
     },
     {
@@ -296,7 +364,7 @@ export const CippUserActions = () => {
     },
     {
       label: "Revoke all user sessions",
-      type: "GET",
+      type: "POST",
       icon: <PersonOff />,
       url: "/api/ExecRevokeSessions",
       data: { ID: "id", Username: "userPrincipalName" },
@@ -305,10 +373,10 @@ export const CippUserActions = () => {
     },
     {
       label: "Delete User",
-      type: "GET",
+      type: "POST",
       icon: <TrashIcon />,
       url: "/api/RemoveUser",
-      data: { ID: "id" },
+      data: { ID: "id", userPrincipalName: "userPrincipalName" },
       confirmText: "Are you sure you want to delete this user?",
       multiPost: false,
     },
