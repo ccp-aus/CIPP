@@ -2,7 +2,7 @@ import { Layout as DashboardLayout } from "/src/layouts/index.js";
 import { CippTablePage } from "/src/components/CippComponents/CippTablePage.jsx";
 import { Button } from "@mui/material";
 import Link from "next/link";
-import { AddHomeWork, Edit, Block, LockOpen } from "@mui/icons-material";
+import { AddHomeWork, Edit, Block, LockOpen, Key } from "@mui/icons-material";
 import { TrashIcon } from "@heroicons/react/24/outline";
 
 const Page = () => {
@@ -17,8 +17,14 @@ const Page = () => {
       condition: (row) => !row.isDirSynced,
     },
     {
+      label: "Edit permissions",
+      link: "/identity/administration/users/user/exchange?userId=[id]",
+      color: "info",
+      icon: <Key />,
+    },
+    {
       label: "Block Sign In",
-      type: "GET",
+      type: "POST",
       icon: <Block />,
       url: "/api/ExecDisableUser",
       data: { ID: "id" },
@@ -28,7 +34,7 @@ const Page = () => {
     },
     {
       label: "Unblock Sign In",
-      type: "GET",
+      type: "POST",
       icon: <LockOpen />,
       url: "/api/ExecDisableUser",
       data: { ID: "id", Enable: true },
@@ -38,10 +44,10 @@ const Page = () => {
     },
     {
       label: "Delete Room",
-      type: "GET",
+      type: "POST",
       icon: <TrashIcon />,
-      url: "/api/RemoveMailbox",
-      data: { ID: "mail" },
+      url: "/api/RemoveUser",
+      data: { ID: "id" },
       confirmText: "Are you sure you want to delete this room mailbox?",
       multiPost: false,
       condition: (row) => !row.isDirSynced,
@@ -62,7 +68,7 @@ const Page = () => {
         "city",
         "state",
         "countryOrRegion",
-        "hiddenFromAddressListsEnabled"
+        "hiddenFromAddressListsEnabled",
       ]}
       cardButton={
         <Button

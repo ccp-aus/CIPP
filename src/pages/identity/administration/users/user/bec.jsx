@@ -1,9 +1,8 @@
-import React, { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Layout as DashboardLayout } from "/src/layouts/index.js";
 import { useSettings } from "/src/hooks/use-settings";
 import { useRouter } from "next/router";
 import { ApiGetCall } from "/src/api/ApiCall";
-import CippFormSkeleton from "/src/components/CippFormPages/CippFormSkeleton";
 import CalendarIcon from "@heroicons/react/24/outline/CalendarIcon";
 import { CheckCircle, Download, Mail, Fingerprint, Launch } from "@mui/icons-material";
 import { HeaderedTabbedLayout } from "../../../../../layouts/HeaderedTabbedLayout";
@@ -11,7 +10,7 @@ import tabOptions from "./tabOptions";
 import ReactTimeAgo from "react-time-ago";
 import { CippCopyToClipBoard } from "../../../../../components/CippComponents/CippCopyToClipboard";
 import { Box, Stack } from "@mui/system";
-import Grid from "@mui/material/Grid2";
+import { Grid } from "@mui/system";
 import CippRemediationCard from "../../../../../components/CippCards/CippRemediationCard";
 import CippButtonCard from "../../../../../components/CippCards/CippButtonCard";
 import { SvgIcon, Typography, CircularProgress, Button } from "@mui/material";
@@ -58,7 +57,11 @@ const Page = () => {
 
   // Fetch BEC Check result using GUID
   const becPollingCall = ApiGetCall({
-    url: `/api/execBECCheck?GUID=${becInitialCall.data?.GUID}`,
+    url: `/api/execBECCheck`,
+    data: {
+      GUID: becInitialCall.data?.GUID,
+      tenantFilter: userSettingsDefaults.currentTenant,
+    },
     queryKey: `execBECCheck-polling-${becInitialCall.data?.GUID}`,
     waiting: false,
   });
@@ -111,7 +114,7 @@ const Page = () => {
   const getUserMessage = () => {
     if (!becPollingCall.data) return null;
     if (becPollingCall.data.NewUsers && becPollingCall.data.NewUsers.length > 0) {
-      return "Suspicious new users have been found in the last 14 days. Please review the list below and take action as needed.";
+      return "New users have been found in the last 14 days. Please review the list below and take action as needed.";
     }
     return "No new users found.";
   };
@@ -126,7 +129,7 @@ const Page = () => {
       if (hasPotentialBreach) {
         return "Potential Breach found.";
       }
-      return "Suspicious new applications have been found. Please review the list below and take action as needed.";
+      return "New applications have been found. Please review the list below and take action as needed.";
     }
     return "No new applications found.";
   };
@@ -137,7 +140,7 @@ const Page = () => {
       becPollingCall.data.MailboxPermissionChanges &&
       becPollingCall.data.MailboxPermissionChanges.length > 0
     ) {
-      return "Suspicious mailbox permission changes have been found.";
+      return "Mailbox permission changes have been found.";
     }
     return "No mailbox permission changes found.";
   };
@@ -195,7 +198,7 @@ const Page = () => {
         >
           <Grid container spacing={2}>
             {/* Remediation Card */}
-            <Grid item size={5}>
+            <Grid size={5}>
               <CippRemediationCard
                 userPrincipalName={userRequest.data[0].userPrincipalName}
                 userId={userRequest.data[0].id}
@@ -205,7 +208,7 @@ const Page = () => {
               />
             </Grid>
             {/* Check 1 Card with Loading */}
-            <Grid item size={7}>
+            <Grid size={7}>
               <CippButtonCard
                 variant="outlined"
                 isFetching={false}
@@ -236,7 +239,7 @@ const Page = () => {
         >
           <Grid container spacing={2}>
             {/* Remediation Card */}
-            <Grid item size={5}>
+            <Grid size={5}>
               <CippRemediationCard
                 userPrincipalName={userRequest.data[0].userPrincipalName}
                 userId={userRequest.data[0].id}
@@ -246,7 +249,7 @@ const Page = () => {
               />
             </Grid>
             {/* All Steps */}
-            <Grid item size={7}>
+            <Grid size={7}>
               <Stack spacing={3}>
                 <CippButtonCard
                   variant="outlined"
@@ -310,7 +313,7 @@ const Page = () => {
                       <Box mt={2}>
                         <PropertyList>
                           {becPollingCall.data.NewRules.map((rule) => (
-                            <PropertyListItem label={rule.Name} value={rule.Description} />
+                            <PropertyListItem key={index} label={rule.Name} value={rule.Description} />
                           ))}
                         </PropertyList>
                       </Box>
@@ -351,6 +354,7 @@ const Page = () => {
                         <PropertyList>
                           {becPollingCall.data.NewUsers.map((user) => (
                             <PropertyListItem
+                              key={index}
                               label={user.userPrincipalName}
                               value={user.createdDateTime}
                             />
@@ -392,8 +396,9 @@ const Page = () => {
                     becPollingCall.data.AddedApps.length > 0 && (
                       <Box mt={2}>
                         <PropertyList>
-                          {becPollingCall.data.AddedApps.map((app) => (
+                          {becPollingCall.data.AddedApps.map((app, index) => (
                             <PropertyListItem
+                              key={index}
                               label={`${app.displayName} - ${app.appId}`}
                               value={app.createdDateTime}
                             />
@@ -435,8 +440,9 @@ const Page = () => {
                     becPollingCall.data.MailboxPermissionChanges.length > 0 && (
                       <Box mt={2}>
                         <PropertyList>
-                          {becPollingCall.data.MailboxPermissionChanges.map((permission) => (
+                          {becPollingCall.data.MailboxPermissionChanges.map((permission, index) => (
                             <PropertyListItem
+                              key={index}
                               label={permission.UserKey}
                               value={`${permission.Operation} - ${permission.Permissions}`}
                             />
@@ -478,8 +484,9 @@ const Page = () => {
                     becPollingCall.data.MFADevices.length > 0 && (
                       <Box mt={2}>
                         <PropertyList>
-                          {becPollingCall.data.MFADevices.map((permission) => (
+                          {becPollingCall.data.MFADevices.map((permission, index) => (
                             <PropertyListItem
+                              key={index}
                               label={permission["@odata.type"]}
                               value={`${permission.displayName} - Registered at ${permission.createdDateTime}`}
                             />
@@ -520,8 +527,9 @@ const Page = () => {
                     becPollingCall.data.ChangedPasswords.length > 0 && (
                       <Box mt={2}>
                         <PropertyList>
-                          {becPollingCall.data.ChangedPasswords.map((permission) => (
+                          {becPollingCall.data.ChangedPasswords.map((permission, index) => (
                             <PropertyListItem
+                              key={index}
                               label={permission.displayName}
                               value={`${permission.lastPasswordChangeDateTime}`}
                             />

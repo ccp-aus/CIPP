@@ -30,7 +30,7 @@ export const CippWizardGroupTemplates = (props) => {
   return (
     <Stack spacing={3}>
       <Grid container spacing={3}>
-        <Grid item size={12}>
+        <Grid size={12}>
           <CippFormComponent
             type="autoComplete"
             name="TemplateList"
@@ -42,20 +42,21 @@ export const CippWizardGroupTemplates = (props) => {
               excludeTenantFilter: true,
               url: "/api/ListGroupTemplates",
               queryKey: "ListGroupTemplates",
-              labelField: (option) => `${option.Displayname} (${option.groupType})`,
+              labelField: (option) =>
+                `${option.Displayname || option.displayName} (${option.groupType})`,
               valueField: "GUID",
               addedField: {
                 groupType: "groupType",
-                Displayname: "Displayname",
-                Description: "Description",
+                Displayname: "displayName",
+                Description: "description",
                 username: "username",
                 allowExternal: "allowExternal",
-                MembershipRules: "MembershipRules",
+                MembershipRules: "membershipRules",
               },
             }}
           />
         </Grid>
-        <Grid item size={12}>
+        <Grid size={12}>
           <CippFormComponent
             type="radio"
             name="groupType"
@@ -65,7 +66,7 @@ export const CippWizardGroupTemplates = (props) => {
             validators={{ required: "Please select a group type" }}
           />
         </Grid>
-        <Grid item size={12}>
+        <Grid size={12}>
           <CippFormComponent
             type="textField"
             name="Displayname"
@@ -74,7 +75,7 @@ export const CippWizardGroupTemplates = (props) => {
             validators={{ required: "Group display name is required" }}
           />
         </Grid>
-        <Grid item size={12}>
+        <Grid size={12}>
           <CippFormComponent
             type="textField"
             name="Description"
@@ -82,7 +83,7 @@ export const CippWizardGroupTemplates = (props) => {
             formControl={formControl}
           />
         </Grid>
-        <Grid item size={12}>
+        <Grid size={12}>
           <CippFormComponent
             type="textField"
             name="username"
@@ -90,7 +91,7 @@ export const CippWizardGroupTemplates = (props) => {
             formControl={formControl}
           />
         </Grid>
-        <Grid item size={12}>
+        <Grid size={12}>
           <CippFormCondition
             field="groupType"
             compareType="is"
@@ -105,7 +106,7 @@ export const CippWizardGroupTemplates = (props) => {
             />
           </CippFormCondition>
         </Grid>
-        <Grid item size={12}>
+        <Grid size={12}>
           <CippFormCondition
             field="groupType"
             compareType="is"
@@ -121,7 +122,7 @@ export const CippWizardGroupTemplates = (props) => {
             />
           </CippFormCondition>
         </Grid>
-        <Grid item size={12}>
+        <Grid size={12}>
           <CippFormCondition
             field="groupType"
             compareType="is"

@@ -6,15 +6,25 @@ import { CopyAll, Delete, PlayArrow, AddBox, Edit, GitHub } from "@mui/icons-mat
 import { ApiGetCall, ApiPostCall } from "../../../../api/ApiCall";
 import { Grid } from "@mui/system";
 import { CippApiResults } from "../../../../components/CippComponents/CippApiResults";
+import { EyeIcon } from "@heroicons/react/24/outline";
 
 const Page = () => {
   const oldStandards = ApiGetCall({ url: "/api/ListStandards", queryKey: "ListStandards-legacy" });
   const integrations = ApiGetCall({
     url: "/api/ListExtensionsConfig",
     queryKey: "Integrations",
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
   const pageTitle = "Standard Templates";
   const actions = [
+    {
+      label: "View Tenant Report",
+      link: "/tenant/standards/compare?templateId=[GUID]",
+      icon: <EyeIcon />,
+      color: "info",
+      target: "_self",
+    },
     {
       label: "Edit Template",
       //when using a link it must always be the full path /identity/administration/users/[id] for example.
@@ -105,7 +115,7 @@ const Page = () => {
       data: {
         ID: "GUID",
       },
-      confirmText: "Are you sure you want to delete this template?",
+      confirmText: "Are you sure you want to delete [templateName]?",
       multiPost: false,
     },
   ];
@@ -125,20 +135,20 @@ const Page = () => {
               severity="warning"
               style={{ display: "flex", alignItems: "center", width: "100%" }}
             >
-              <Grid item size={12}>
+              <Grid size={12}>
                 You have legacy standards available. Press the button to convert these standards to
                 the new format. This will create a new template for each standard you had, but will
                 disable the schedule. After conversion, please check the new templates to ensure
                 they are correct and re-enable the schedule.
               </Grid>
-              <Grid item size={2}>
+              <Grid size={2}>
                 <Button onClick={() => handleConversion()} variant={"contained"}>
                   Convert Legacy Standards
                 </Button>
               </Grid>
             </Alert>
           </Grid>
-          <Grid item size={8}>
+          <Grid size={8}>
             <CippApiResults apiObject={conversionApi} />
           </Grid>
         </Grid>
