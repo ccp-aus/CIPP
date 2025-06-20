@@ -1,4 +1,4 @@
-import { Close, Download, RouterOutlined } from "@mui/icons-material";
+import { Close, Download, Help } from "@mui/icons-material";
 import {
   Alert,
   CircularProgress,
@@ -9,15 +9,17 @@ import {
   Box,
   SvgIcon,
   Tooltip,
+  Button,
+  keyframes,
 } from "@mui/material";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { getCippError } from "../../utils/get-cipp-error";
 import { CippCopyToClipBoard } from "./CippCopyToClipboard";
+import { CippDocsLookup } from "./CippDocsLookup";
 import React from "react";
 import { CippTableDialog } from "./CippTableDialog";
 import { EyeIcon } from "@heroicons/react/24/outline";
 import { useDialog } from "../../hooks/use-dialog";
-import { useRouter } from "next/router";
 
 const extractAllResults = (data) => {
   const results = [];
@@ -38,7 +40,7 @@ const extractAllResults = (data) => {
 
     if (item && typeof item === "object") {
       const text = item.resultText || "";
-      const copyField = item.copyField || text;
+      const copyField = item.copyField || "";
       const severity =
         typeof item.state === "string" ? item.state : getSeverity(item) ? "error" : "success";
 
@@ -47,6 +49,7 @@ const extractAllResults = (data) => {
           text,
           copyField,
           severity,
+          ...item,
         };
       }
     }
@@ -72,7 +75,7 @@ const extractAllResults = (data) => {
         results.push(processed);
       }
     } else {
-      const ignoreKeys = ["metadata", "Metadata"];
+      const ignoreKeys = ["metadata", "Metadata", "severity"];
 
       if (typeof obj === "object") {
         Object.keys(obj).forEach((key) => {
@@ -121,7 +124,6 @@ export const CippApiResults = (props) => {
   const [fetchingVisible, setFetchingVisible] = useState(false);
   const [finalResults, setFinalResults] = useState([]);
   const tableDialog = useDialog();
-  const router = useRouter();
   const pageTitle = `${document.title} - Results`;
   const correctResultObj = useMemo(() => {
     if (!apiObject.isSuccess) return;
@@ -158,12 +160,12 @@ export const CippApiResults = (props) => {
   useEffect(() => {
     setErrorVisible(!!apiObject.isError);
 
+    if (apiObject.isFetching || (apiObject.isIdle === false && apiObject.isPending === true)) {
+      setFetchingVisible(true);
+    } else {
+      setFetchingVisible(false);
+    }
     if (!errorsOnly) {
-      if (apiObject.isFetching || (apiObject.isIdle === false && apiObject.isPending === true)) {
-        setFetchingVisible(true);
-      } else {
-        setFetchingVisible(false);
-      }
       if (allResults.length > 0) {
         setFinalResults(
           allResults.map((res, index) => ({
@@ -172,6 +174,7 @@ export const CippApiResults = (props) => {
             copyField: res.copyField,
             severity: res.severity,
             visible: true,
+            ...res,
           }))
         );
       } else {
@@ -239,7 +242,6 @@ export const CippApiResults = (props) => {
           </Alert>
         </Collapse>
       )}
-
       {/* Error alert */}
       <Collapse in={errorVisible} unmountOnExit>
         {apiObject.isError && (
@@ -275,7 +277,38 @@ export const CippApiResults = (props) => {
                   severity={resultObj.severity || "success"}
                   action={
                     <>
+                      {resultObj.severity === "error" && (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="secondary"
+                          startIcon={<Help />}
+                          onClick={() => {
+                            const searchUrl = `https://docs.cipp.app/?q=Help+with:+${encodeURIComponent(
+                              resultObj.copyField || resultObj.text
+                            )}&ask=true`;
+                            window.open(searchUrl, "_blank");
+                          }}
+                          sx={{
+                            ml: 1,
+                            mr: 1,
+                            backgroundColor: "white",
+                            color: "error.main",
+                            "&:hover": {
+                              backgroundColor: "grey.100",
+                            },
+                            py: 0.5,
+                            px: 1,
+                            minWidth: "auto",
+                            fontSize: "0.875rem",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Get Help
+                        </Button>
+                      )}
                       <CippCopyToClipBoard text={resultObj.copyField || resultObj.text} />
+
                       <IconButton
                         aria-label="close"
                         color="inherit"
@@ -294,7 +327,9 @@ export const CippApiResults = (props) => {
           ))}
         </>
       )}
-      {(apiObject.isSuccess || apiObject.isError) && finalResults?.length > 0 ? (
+      {(apiObject.isSuccess || apiObject.isError) &&
+      finalResults?.length > 0 &&
+      hasVisibleResults ? (
         <Box display="flex" flexDirection="row">
           <Tooltip title="View Results">
             <IconButton onClick={() => tableDialog.handleOpen()}>

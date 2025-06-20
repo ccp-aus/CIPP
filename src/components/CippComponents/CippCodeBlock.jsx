@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { atomDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { CippCopyToClipBoard } from "./CippCopyToClipboard";
@@ -53,7 +53,8 @@ export const CippCodeBlock = (props) => {
           height={editorHeight}
           options={{
             wordWrap: true,
-    
+            lineNumbers: showLineNumbers ? "on" : "off",
+            minimap: { enabled: showLineNumbers},
           }}
           {...other}
         />
@@ -66,7 +67,6 @@ export const CippCodeBlock = (props) => {
           showLineNumbers={showLineNumbers}
           startingLineNumber={startingLineNumber}
           wrapLongLines={wrapLongLines}
-          
         >
           {code}
         </SyntaxHighlighter>
